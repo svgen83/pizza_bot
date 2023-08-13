@@ -140,7 +140,60 @@ def create_product_price(access_token, price_book_id, product):
         headers=headers,
         json=json_data)
     response.raise_for_status()
-    
+
+
+def create_flow(access_token, flow_model):
+    fields = {'address': 'string',
+              'alias': 'string',
+              'longitude': 'float',
+              'latitude': 'float'}
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'}
+    json_data = {
+        'data': {'type': 'flow',
+                 'name': flow_model,
+                 'slug': flow_model,
+                 'description': 'Магазин пиццерия',
+                 'enabled': True},}
+    response = requests.post(
+        'https://api.moltin.com/v2/flows',
+        headers=headers, json=json_data)
+    response.raise_for_status()
+    #print(response.json())
+    flow = response.json()['data']
+    flow_id = flow['id']
+    for field_name, field_type in fields.items():
+        create_field(flow_id, field_name, field_type, access_token=access_token)
+
+
+def create_field(flow_id, field_name, field_type, access_token):
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'}
+
+    json_data = {
+        "data": {
+        "type": "field",
+        "name": field_name,
+        "slug": field_name,
+        "field_type": field_type,
+        "required": True,
+        "enabled": True,
+        "description": "",
+        "relationships": {
+            "flow": {
+                "data": {
+                    "type": "flow",
+                    "id": flow_id
+                }}}}}
+
+    response = requests.post(
+        'https://api.moltin.com/v2/fields',
+        headers=headers, json=json_data)
+    response.raise_for_status()
+    print(response.json())
+ 
 
 if __name__ == "__main__":
 
@@ -148,6 +201,8 @@ if __name__ == "__main__":
 ##    menu_path = "./menu.json"
 ##    address_path = "./addresses.json"
     menu_url = 'https://dvmn.org/media/filer_public/a2/5a/a25a7cbd-541c-4caf-9bf9-70dcdf4a592e/menu.json'
+    
+    address_url = 'https://dvmn.org/media/filer_public/90/90/9090ecbf-249f-42c7-8635-a96985268b88/addresses.json'
       
     data = {
         'client_id': os.getenv('CLIENT_ID'),
@@ -159,16 +214,22 @@ if __name__ == "__main__":
     token_response.raise_for_status()
     token = token_response.json()['access_token']
 
-    price_book_id = create_price_book(token)
+    #price_book_id = create_price_book(token)
 
-    menu_response = requests.get(menu_url)
-    menu_response.raise_for_status()
-    pizza_menu = menu_response.json()
-    for pizza in pizza_menu:
-        product_id = create_product(token, pizza)
-        create_product_price(token, price_book_id, pizza)
-        main_image_id = load_image(token, pizza['product_image']['url'])
-        create_main_image(token, main_image_id, product_id)
-    print("Товары добавлены")
+    #menu_response = requests.get(menu_url)
+    #menu_response.raise_for_status()
+    #pizza_menu = menu_response.json()
+    #for pizza in pizza_menu:
+     #   product_id = create_product(token, pizza)
+      #  create_product_price(token, price_book_id, pizza)
+      #  main_image_id = load_image(token, pizza['product_image']['url'])
+       # create_main_image(token, main_image_id, product_id)
+    #print("Товары добавлены")
+    
+    
+    address_response = requests.get(address_url)
+    address_response.raise_for_status()
+    pizzeria_adresses = address_response.json()
+    create_flow(token, 'Pizzerias')
     
     
